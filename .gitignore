@@ -1,0 +1,21 @@
+# Local models, logs, private documents and experimental outputs
+/outputs/local-ai/
+/work/
+/runtime/
+/outputs/*.png
+/outputs/invoice-studio/test-results*/
+/outputs/invoice-studio/dual-model*/
+/outputs/invoice-studio/automatic-recheck-test/
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.env.*
+!.env.example
+*.log
+*.gguf
+*.gguf.*
+*.zip
+*.tmp
+.DS_Store
+Thumbs.db

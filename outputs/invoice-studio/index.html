@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Invoice Studio — Invoice workspace</title>
+  <meta name="description" content="A private, local workspace to upload and preview your invoices.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="./"><span class="brand-icon">i<span>·</span></span>Invoice Studio</a><span class="workspace-label">YOUR WORKSPACE</span><div class="local-badge"><span></span>Local workspace</div></header>
+  <main>
+    <div class="heading"><div><div class="eyebrow">DOCUMENT WORKSPACE</div><h1>A clearer view of your invoices.</h1><p>Upload an invoice. Check the details. Keep things moving.</p></div><button class="button secondary" id="demo-button">Try a sample invoice</button></div>
+    <div class="workspace">
+      <aside class="upload-column">
+        <section class="card upload-card"><div class="section-heading"><h2>Upload invoice</h2><span class="step">01</span></div>
+          <label class="dropzone" id="dropzone" for="file-input"><span class="upload-icon" aria-hidden="true">↥</span><strong>Drop your invoice pages here</strong><span>or <span class="link-text">browse files</span></span><small>JPG/PNG images only · 20 MB per file</small><input id="file-input" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" multiple></label>
+          <p class="check-note">Add or reorder pages, then select Extract invoice. All pages are read first and collected by supplier and invoice number, then each invoice receives its own summary. If invoice checks fail, you can confirm and add it anyway.</p><div id="feedback" role="status" aria-live="polite"></div>
+          <div class="privacy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v6c0 4 7 9 7 9s7-5 7-9V6Z"/><path d="m9 12 2 2 4-4"/></svg><span>Processed on your computer.<br><small>No invoice data is sent to the cloud.</small></span></div>
+        </section>
+        <section class="card files-card"><div class="section-heading"><h2>In this session</h2><span class="count" id="file-count">0</span></div><div id="file-list"><div class="files-empty">Your uploaded invoices will appear here.</div></div></section>
+        <section class="ai-card"><div class="ai-top"><span class="sparkle" aria-hidden="true">✧</span><span class="coming">LOCAL AI</span></div><h2>NuExtract3 + Qwen3.5 9B</h2><p>NuExtract3 reads your invoice. Qwen3.5 9B groups the items and writes a short summary. Everything stays on your computer.</p><div class="ai-footer">Results stay in this session.</div></section>
+      </aside>
+      <section class="card preview-card" aria-label="Invoice preview"><div class="preview-toolbar"><div class="preview-title"><span class="document-icon" aria-hidden="true">▤</span><div><h2>Document preview</h2><span id="preview-subtitle">No invoice selected</span></div></div><div class="preview-actions"><span id="file-type" hidden></span><a id="open-file" class="button small secondary" target="_blank" rel="noopener" hidden>Open file</a></div></div>
+        <div id="preview-stage" class="preview-stage"><div class="preview-empty"><div class="empty-document" aria-hidden="true"><span></span><i></i><i></i><i></i><b></b></div><h3>Your invoice, in focus.</h3><p>Upload a document to see it here.<br>JPG and PNG images are welcome.</p><button class="button primary" id="choose-button">Choose an invoice</button></div></div>
+        <div class="preview-footer"><span id="preview-status"><span class="status-dot"></span>Ready when you are</span><span>Preview workspace</span></div>
+      </section>
+    </div>
+    <section class="card extraction-card" aria-label="Extracted invoice details"><div class="section-heading"><div><div class="eyebrow">LOCAL EXTRACTION + SUMMARY</div><h2>Invoice details</h2></div><button id="extract-button" class="button secondary" hidden>Extract invoice</button></div><div id="extraction-content" aria-live="polite"><p class="extraction-note">Upload your invoice pages, then select Extract invoice.</p></div></section>
+    <footer class="page-footer"><span>Less paperwork. More perspective.</span><span>Files are cleared when you close or reload this tab.</span></footer>
+  </main><script src="app.js"></script>
+</body></html>
