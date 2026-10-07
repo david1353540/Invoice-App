@@ -99,18 +99,4 @@ Run the Python checks with `py -3 -m unittest discover -s tests -p "test_*.py"`.
 
 ## Technical choices made
 
-Initially, I began with Muse Glimmer 30B to see the correct extractions and understand what to expect from the summary. However, extraction for a one-page invoice with one line item took approximately three minutes.
-
-I then moved to Qwen3.5 9B. With slight prompt adjustments, it explained invoices to a similar extent as the 30B model and took approximately one minute. To go further, I tried Qwen3.5 4B. Time fell to roughly 30 seconds, but the drop in extraction and summary accuracy was too great.
-
-Next, I tried two 4B models: NuExtract3 with thinking off for extraction, and Qwen3-4B-Thinking-2507 for summaries. Initial examples matched the 9B results in around 30 seconds. However, a random 20-invoice test produced 12 passes and eight failures, with inconsistent results, including invoice notes sometimes missing.
-
-To investigate whether extraction or summarisation was responsible, I replaced the Qwen 4B model with Qwen3.5 9B while keeping NuExtract3. This provided 20 automatic passes on the same 20 test invoices, with all 210 line items matching and an average of 18.7 seconds per invoice. Summary wording still had limitations, so this did not establish perfect semantic accuracy or prove that every earlier failure came from the summary model.
-
-Later experiments added separate page identification, automatic rereads and AI summary review. A subsequent 20-invoice run averaged 75.4 seconds. Synthetic/not-payable labels unnecessarily triggered rereads, and the AI review still missed unsupported wording. I removed routine summary review and limited retries to defined errors.
-
-The current design reads all page images with NuExtract3 first, gathers records by supplier and invoice number, and only then sends each group to Qwen3.5 9B for a text-only summary. Thinking is off for both models.
-
-The latest fresh test used 20 synthetic invoices with 1–20 line items each, 23 pages in total, and ten paired batches with interleaved pages. All invoice fields, all 210 line items and all page groupings matched. It took 297.1 seconds overall, or 14.86 seconds per invoice averaged across batches, with 23 NuExtract calls, 20 Qwen calls, no retries and no GPU timeouts. Manual review still found four material summary-wording issues; one automatic keyword failure was simply “sixty-day” versus “60-day”.
-
-These timings are observations from different fixtures and workflows, not a controlled hardware benchmark. The final average measures batch throughput, not individual-upload latency. Clean synthetic tests do not establish accuracy on real-world scans.
+initially I began with Muse Glimmer 30B to be able to see the correct extractions and to understand what to expect for the summary however, the extraction time for a one page and one item line it took ~3 minutes. Moving to a smaller model I went to Qwen3.5 9B model this had a much better response with slight tweaks to prompts it managed to explain the invoice to a similar extent as the 30B model and took ~1 minute. Then to go a step further I tried Qwen3.5 4B the time taken went to ~30 seconds but, the drop in accuracy with information display and summary was too great. Resulting in trying two 4B models one for extraction and one for summary, using NuExtract3 4B -with thinking off- and Qwen3-4B-Thinking-2507 it matched the results of the 9B model and took ~30 seconds. After running a random 20 invoice test on the double model solution 12 passed and 8 failed with intermittent results - sometimes the notes weren't extracted from the invoice. To test whether it is an extraction problem or reasoning the next test will switch the Qwen 4B model with the Qwen3.5 9B model. This provided
