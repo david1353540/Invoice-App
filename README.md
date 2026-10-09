@@ -99,4 +99,43 @@ Run the Python checks with `py -3 -m unittest discover -s tests -p "test_*.py"`.
 
 ## Technical choices made
 
-initially I began with Muse Glimmer 30B to be able to see the correct extractions and to understand what to expect for the summary however, the extraction time for a one page and one item line it took ~3 minutes. Moving to a smaller model I went to Qwen3.5 9B model this had a much better response with slight tweaks to prompts it managed to explain the invoice to a similar extent as the 30B model and took ~1 minute. Then to go a step further I tried Qwen3.5 4B the time taken went to ~30 seconds but, the drop in accuracy with information display and summary was too great. Resulting in trying two 4B models one for extraction and one for summary, using NuExtract3 4B -with thinking off- and Qwen3-4B-Thinking-2507 it matched the results of the 9B model and took ~30 seconds. After running a random 20 invoice test on the double model solution 12 passed and 8 failed with intermittent results - sometimes the notes weren't extracted from the invoice. To test whether it is an extraction problem or reasoning the next test will switch the Qwen 4B model with the Qwen3.5 9B model. This provided a great outcome with average invoice time being 16.6 seconds and no substantial errors. After adding a recheck if an error occurs and changing the way the models interact with each other by making it so Qwen only receives relevant data after Nuextract has finished every image in case of two different invoices extracted at once, the average run time went to 14.86 seconds.
+### Model selection and evaluation
+
+Development began with Muse Glimmer 30B as a qualitative reference for invoice extraction and summary quality. Although its outputs helped establish the intended behaviour, a one-page invoice with a single line item took approximately three minutes to process. This made it unsuitable for the desired interactive workflow.
+
+Qwen3.5 9B reduced the observed processing time to approximately one minute. Prompt refinement brought its summaries closer to the level of detail produced by the larger model. Qwen3.5 4B reduced the time further, to roughly 30 seconds in initial examples, but extraction and summary quality became less reliable.
+
+The next approach separated extraction from summarisation: NuExtract3 4B, with thinking disabled, read the invoice, while Qwen3-4B-Thinking-2507 generated the summary. Early examples appeared comparable to the 9B model and took approximately 30 seconds. A broader 20-invoice evaluation exposed inconsistent behaviour, however: 12 invoices passed and eight failed the automatic checks, with issues including missing notes. That evaluation averaged 47.6 seconds per attempt, demonstrating why individual examples were insufficient to assess the approach.
+
+To investigate the effect of the summary model, Qwen3.5 9B replaced the 4B reasoning model while NuExtract3 remained responsible for extraction. On the same 20 test invoices, all automatic checks passed and all 210 line items matched the expected values, with a mean processing time of 18.7 seconds. A subsequent fresh 20-invoice run also passed the automatic checks and averaged 16.6 seconds. These results supported retaining the two-model design, although automatic passes did not establish that every summary was semantically correct.
+
+### Processing improvements
+
+The current implementation assigns each model a distinct role:
+
+1. **Extract every page first.** NuExtract3 reads each uploaded image separately, collecting the supplier, invoice reference, dates, amounts, line items and relevant notes in the same pass. It completes all images, including any necessary amount-recovery work, before Qwen starts.
+2. **Group the collected data.** Pages are grouped by supplier and invoice number. This keeps different invoices separate, including invoices from the same supplier, while allowing matching continuation pages to be reunited even when uploaded out of order.
+3. **Summarise each invoice independently.** Qwen3.5 9B receives only the collected text fields and produces a supplier-first, two-sentence summary using product or service categories and relevant commercial conditions. It does not receive invoice images. Thinking is disabled for both models.
+
+This arrangement eliminates the separate image-identification pass previously used for grouping. It also avoids rereading the full document merely to obtain information already extracted from individual pages. Repeated totals are not added together, conflicting values are left blank with warnings, and uncertain page identities are flagged for review.
+
+An intermediate implementation introduced routine rereads and a separate AI summary review. A later 20-invoice run averaged 75.4 seconds: informational labels such as “synthetic test document” triggered unnecessary rereads, while the summary reviewer still missed unsupported claims. Routine AI summary review was therefore removed. Basic structural and content validation remains, with bounded correction attempts only when a defined error is detected. Informational warnings alone no longer trigger retries.
+
+### Latest test results
+
+The latest evaluation used 20 fresh synthetic invoices with 1–20 line items each: 210 line items across 23 page images. They were processed in ten two-invoice batches, with pages interleaved to exercise grouping as well as extraction.
+
+| Measure | Result |
+| --- | --- |
+| Invoice fields and line-item data | 20/20 invoices matched expected values |
+| Line descriptions, quantities, unit prices and amounts | 210/210 line items matched |
+| Page grouping | Correct for all 20 invoices |
+| Extraction-before-summary ordering | Confirmed in all ten batches |
+| Model calls | 23 NuExtract3 calls and 20 Qwen calls |
+| Automatic retries / GPU timeouts | 0 / 0 |
+| Total processing time | 297.1 seconds |
+| Average time per invoice across batches | 14.86 seconds |
+
+The complete automatic-check score was 19/20 because one summary used “sixty-day” where a keyword check expected “60-day”; the support-period meaning was preserved. Manual review nevertheless identified four material summary-wording issues, including describing future delivery charges or excluded installation as already charged, and classifying replacement work as parts. Some summaries also retained narrow product lists rather than broader categories. These limitations are separate from the exact extraction-data results.
+
+The 14.86-second figure measures batch throughput, not the response time of an isolated upload. Earlier timings came from different examples and workflows and are not a controlled performance comparison. The latest test exercised the production processing modules directly, not browser uploading or admission OCR. Clean synthetic invoices do not establish accuracy on poor scans, handwriting or unfamiliar layouts, and extracted values and summaries should still be checked against the original images.
